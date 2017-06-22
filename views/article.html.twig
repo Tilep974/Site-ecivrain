@@ -1,0 +1,88 @@
+{% extends "layout.html.twig" %}
+{% import "macros/_macroThreadedComments.html.twig" as macroThreadedComments %}
+{% block cssSup %}<link href="{{ asset('/css/article.css') }}" rel="stylesheet" />{% endblock %}
+
+{% block title %}
+    {{ article.title }}
+{% endblock %}
+
+{% block content %}
+    <div id="pageOpening">
+        <article class="row">
+            <header  id="articleTitle" class="col-xs-12">
+                <h2>{{ article.title }}</h2>
+
+                <hr />
+            </header>
+
+            <div id="articleContent" class="col-xs-12">
+                <p>{{ article.content|raw }}</p>
+            </div>
+
+            <footer class="col-xs-12">
+                <hr />
+                <h5>
+                    le <time datetime="{{ article.date }}" pubdate="pubdate">{{ article.date|date("d/m/Y") }}</time>
+                </h5>
+            </footer>
+        </article>
+
+        <section class="row">
+            <h3 class="col-xs-12">
+                Ajouter un commentaire
+                <hr />
+            </h3>
+
+            <div class="col-xs-12">
+                {% if mainForm %}
+                    {{ form_start(mainForm) }}
+                        <div class="form-group">
+                            {{ form_widget(mainForm.content, { 'attr' : {
+                                    'rows' : '4',
+                                    'class' : 'form-control',
+                                    'placeholder' : 'Entrez votre commentaire'
+                                }})
+                            }}
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" class="btn btn-primary" value="Publier le commentaire" />
+                        </div>
+                    {{ form_end(mainForm) }}
+                {% else %}
+                    <p>
+                        <a href="{{ path('register') }}" title="Page d'inscription'">Inscrivez-vous</a> ou <a href="{{ path('login') }}" title="Page de connexion">connectez-vous</a> pour ajouter un commentaire.
+                    </p>
+                {% endif %}
+            </div>
+        </section>
+
+        {% for flashMessage in app.session.flashbag.get('success') %}
+            <div class="alert alert-success col-xs-12">
+                {{ flashMessage }}
+            </div>
+        {% endfor %}
+        {% for flashMessage in app.session.flashbag.get('error') %}
+            <div class="alert alert-danger col-xs-12">
+                {{ flashMessage }}
+            </div>
+        {% endfor %}
+
+        <section id="commentSection" class="row">
+            <h3>
+                Commentaires
+                <hr />
+            </h3>
+
+            {% for parent in parents %}
+                {{ macroThreadedComments.print_comments_recursively(parent, children, 0, flags, commentForms, editForms, user) }}
+            {% else %}
+                <div class="row">
+                    <p class="col-xs-12">Aucun commentaire n'a encore été publié sur cet article.</p>
+                </div>
+            {% endfor %}
+
+        </section>
+    </div>
+{% endblock %}
+
+{% block jsSup %}<script src="{{ asset('/js/article.js') }}"></script>{% endblock %}

@@ -1,0 +1,183 @@
+{% macro print_comments_recursively(parent, children, commentId, flags, commentForms, editForms, user) %}
+    <article class="comment row {% if commentId is odd %}odd-comment{% else %}even-comment{% endif %}">
+        <!-- Comment header -->
+        <header class="row">
+            <div class="col-xs-12 col-sm-5">
+                <h4>{{ parent.author.username}}</h4>
+            </div>
+
+        </header>
+        <hr class="marginTopless" />
+        <!-- End comment header -->
+
+        <!-- Comment content -->
+        <div class="row" id="commentContent-{{ parent.id }}">
+            <p>{{ parent.content | nl2br }}</p>
+        </div>
+
+        {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+            <!-- Edit-a-comment form -->
+            {% for editForm in editForms %}
+                {% if editForm.vars.name == "editForm-#{parent.id}" and parent.author.id == user.id and parent.isDeleted == false %}
+                    <div class="hidden-form col-xs-12">
+                        {{ form_start(editForm) }}
+                            <div class="form-group">
+                                {{ form_widget(editForm.content, { 'attr' : {
+                                        'rows' : '4',
+                                        'class' : 'form-control',
+                                        'placeholder' : 'Entrez votre commentaire'
+                                    }})
+                                }}
+                            </div>
+                            <div class="form-group">
+                                <input type="submit" class="btn btn-primary confirmEditButton" value="Modifier" id="confirmEdit-{{ parent.id }}" />
+                            </div>
+                        {{ form_end(editForm) }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+            <!-- End edit-a-comment form -->
+            <!-- End comment content -->
+
+            <!-- Comment footer -->
+            <footer class="row" id="commentFooter-{{ parent.id }}">
+                <hr class="marginTopless marginBottomless" />
+
+                {% if parent.isDeleted == false %}
+                    <!-- Edit and delete -->
+                    {% if user.id == parent.author.id %}
+                        <p class="pull-left">
+                            <button class="btn btn-info btn-xs editButton" title="Modifier le commentaire" id="editButton-{{ parent.id }}">
+                                <span class="glyphicon glyphicon-edit"></span>
+                            </button>
+                            <button class="btn btn-danger btn-xs" title="Supprimer le commentaire" data-toggle="modal" data-target="#deleteDialog{{ parent.id }}" id="deleteButton-{{ parent.id }}">
+                                <span class="glyphicon glyphicon-remove"></span>
+                            </button>
+
+                            <!-- Delete modal window -->
+                            <div class="modal fade" id="deleteDialog{{ parent.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                                                &times;
+                                            </button>
+                                            <h4 class="modal-title" id="deleteModalLabel">
+                                                Confirmation
+                                            </h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>
+                                                Êtes-vous certain de vouloir supprimer ce commentaire ?
+                                            </p>
+                                            <p>
+                                                Seul son contenu sera effacé. Il sera aussi impossible d'y répondre.
+                                            </p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">
+                                                Annuler
+                                            </button>
+                                            <a href="#" class="btn btn-info confirmDeleteButton" id="confirmDelete-{{ parent.id }}">
+                                                Confirmer
+                                            </a>
+                                        </div>
+                                    </div><!-- modal-content -->
+                                </div><!-- modal-dialog -->
+                            </div><!-- modal -->
+                            <!-- End delete modal window -->
+                        </p>
+                    {% endif %}
+                    <!-- End edit and delete -->
+
+                    <!-- Report and respond -->
+                    <p class="pull-right">
+                        {% if user.id != parent.author.id %}
+                            {% if parent.id in flags|keys %}
+                                <button type="button" class="btn btn-warning btn-sm disabled" title="Commentaire déjà signalé">
+                                    Déjà signalé
+                                </button>
+                            {% else %}
+                                <button type="button" class="btn btn-default btn-sm" title="Signaler le commentaire" data-toggle="modal" data-target="#flagDialog{{ parent.id }}" id="flagButton-{{ parent.id }}">
+                                    Signaler
+                                </button>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if parent.level >= 0 and parent.level < 3 %}
+                            <button type="button" class="btn btn-primary btn-sm respondButton" title="Répondre au commentaire" id="respond-{{ parent.id }}">
+                                Répondre
+                            </button>
+                        {% endif %}
+
+                        <!-- Report modal window -->
+                        {% if user.id != parent.author.id %}
+                            <div class="modal fade" id="flagDialog{{ parent.id }}" tabindex="-1" role="dialog" aria-labelledby="flagModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                                                &times;
+                                            </button>
+                                            <h4 class="modal-title" id="flagModalLabel">
+                                                Confirmation
+                                            </h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>
+                                                Êtes-vous certain de vouloir signaler ce commentaire ?
+                                            </p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">
+                                                Annuler
+                                            </button>
+                                            <a href="#" class="btn btn-info confirmFlagButton" id="confirmFlag-{{ parent.id }}">
+                                                Confirmer
+                                            </a>
+                                        </div>
+                                    </div><!-- modal-content -->
+                                </div><!-- modal-dialog -->
+                            </div><!-- modal -->
+                        {% endif %}
+                        <!-- End report modal window -->
+                    </p>
+                    <!-- End report and respond -->
+
+                    <!-- Respond-to-a-comment form -->
+                    {% for commentForm in commentForms %}
+                        {% if commentForm.vars.name == "commentForm-#{parent.id}" %}
+                            <div class="hidden-form col-xs-12">
+                                {{ form_start(commentForm) }}
+                                    <div class="form-group">
+                                        {{ form_widget(commentForm.content, { 'attr' : {
+                                                'rows' : '4',
+                                                'class' : 'form-control',
+                                                'placeholder' : 'Entrez votre commentaire'
+                                            }})
+                                        }}
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="submit" class="btn btn-primary" value="Publier" />
+                                    </div>
+                                {{ form_end(commentForm) }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    <!-- End respond-to-a-comment form -->
+                {% endif %}
+            </footer>
+        {% endif %}
+        <!-- End comment footer -->
+
+        {% set commentId = commentId + 1 %}
+
+        <!-- Display children comments -->
+        {% for child in children %}
+            {% if child.parentId == parent.id  %}
+                {{ _self.print_comments_recursively(child, children, commentId, flags, commentForms, editForms, user) }}
+            {% endif %}
+        {% endfor %}
+        <!-- End display children comments -->
+    </article>
+{% endmacro %}

@@ -1,0 +1,24 @@
+body {
+	padding-top: 50px;
+}
+
+.footer {
+	border-top: 1px solid #ccc;
+	padding-top: 10px;
+	text-align: center;
+}
+
+.articleTitle:hover, .articleTitle:focus {
+	text-decoration: none;
+}
+
+.adminTable {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.navbar {
+	background-color: #BDBDBD;
+	height: 53px;
+}
+
